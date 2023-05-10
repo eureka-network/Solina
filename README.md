@@ -1,0 +1,2 @@
+# Solina
+Intent Solver architecture
