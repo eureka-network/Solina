@@ -101,7 +101,7 @@ mod tests {
         // in little endian representation. See documentation
         // https://docs.rs/crate/plonky2_ecdsa/0.1.0/source/src/curve/secp256k1.rs
         // biguint repr = 55066263022277343669578718895168534326250603453777594175500187360389116729240
-        let plonky2_ecdsa_gen_x_u64: [u64; 4] = [
+        let mut plonky2_ecdsa_gen_x_u64: [u64; 4] = [
             0x59F2815B16F81798,
             0x029BFCDB2DCE28D9,
             0x55A06295CE870B07,
@@ -112,6 +112,17 @@ mod tests {
             .flat_map(|u| u.to_le_bytes())
             .collect::<Vec<u8>>();
 
+        plonky2_ecdsa_gen_x_u64.reverse();
+        println!(
+            "FLAG: {}",
+            BigUint::from_bytes_be(
+                &plonky2_ecdsa_gen_x_u64
+                    .iter()
+                    .flat_map(|u| u.to_be_bytes())
+                    .collect::<Vec<_>>()
+            )
+        );
+
         // x coordinate generator used in secp256k1 rust library,
         // in big little endian representation. See documentation
         // https://docs.rs/crate/secp256k1/latest/source/src/constants.rs
@@ -121,6 +132,14 @@ mod tests {
             0x0b, 0x07, 0x02, 0x9b, 0xfc, 0xdb, 0x2d, 0xce, 0x28, 0xd9, 0x59, 0xf2, 0x81, 0x5b,
             0x16, 0xf8, 0x17, 0x98,
         ];
+        println!(
+            "PLONKY2_BIGUINT: {}",
+            BigUint::from_bytes_le(&plonky_2_ecdsa_gen_x_u8)
+        );
+        println!(
+            "SECP256K1_BIGUINT = {}",
+            BigUint::from_bytes_be(&secp256k1_gen_x_u8)
+        );
 
         // y coordinate generator used in plonky2_ecdsa rust library,
         // in little endian representation. See documentation
@@ -161,42 +180,51 @@ mod tests {
     fn aux_test() {
         type C = plonky2_ecdsa::curve::secp256k1::Secp256K1;
 
-        let msg = Secp256K1Scalar::rand();
-        let sk = ECDSASecretKey::<C>(Secp256K1Scalar::rand());
-        let pk = sk.to_public();
-        let sig = sign_message(msg, sk);
+        let plonky2_msg = Secp256K1Scalar::rand();
+        let plonky2_sk = ECDSASecretKey::<C>(Secp256K1Scalar::rand());
+        let plonky2_pk = plonky2_sk.to_public();
+        let plonky2_sig = sign_message(plonky2_msg, plonky2_sk);
 
-        assert!(verify_message(msg, sig, pk));
+        assert_eq!(plonky2_sig.r.0.len(), 4);
+        assert_eq!(plonky2_sig.s.0.len(), 4);
+
+        assert!(verify_message(plonky2_msg, plonky2_sig, plonky2_pk));
+
+        // to compare data formats across secp256k1 vs plonky_ecdsa2
+        // we need to reverse the previous u64 data representation
+        // to convert to big endian bytes
+        let mut msg_u64_be_byte_data = plonky2_msg.0.clone();
+
+        msg_u64_be_byte_data.reverse();
+        let msg_u8_be_byte_data = msg_u64_be_byte_data
+            .iter()
+            .flat_map(|a| a.to_be_bytes())
+            .collect::<Vec<u8>>();
 
         let secp = Secp256k1::new();
-        let msg = Message::from_slice(
-            &msg.0
-                .iter()
-                .flat_map(|a| a.to_le_bytes())
-                .collect::<Vec<u8>>(),
-        )
-        .unwrap();
-        let private_key = sk.0.to_canonical_biguint().to_bytes_le();
-        let secret_key = SecretKey::from_slice(&private_key).unwrap();
-        let public_key = secret_key.public_key(&secp);
-        let should_be_public_key = PublicKey::from_slice(
-            &[
-                pk.0.x
-                    .0
-                    .iter()
-                    .flat_map(|a| a.to_le_bytes())
-                    .collect::<Vec<_>>(),
-                pk.0.y
-                    .0
-                    .iter()
-                    .flat_map(|a| a.to_le_bytes())
-                    .collect::<Vec<_>>(),
-            ]
-            .concat(),
-        )
-        .unwrap();
+        let secp256k1_msg = Message::from_slice(&msg_u8_be_byte_data).unwrap();
+        let mut plonky2_sk_u64_data = plonky2_sk.0 .0.clone();
+        plonky2_sk_u64_data.reverse();
+        let plonky2_sk_u8_data = plonky2_sk_u64_data
+            .iter()
+            .flat_map(|u| u.to_be_bytes())
+            .collect::<Vec<u8>>();
+        let secp256k1_secret_key = SecretKey::from_slice(&plonky2_sk_u8_data).unwrap();
+        let secp256k1_public_key = secp256k1_secret_key.public_key(&secp);
+        let mut signature_u64_data = [plonky2_sig.r.0.clone(), plonky2_sig.s.0.clone()].concat();
+        assert_eq!(signature_u64_data.len(), 8);
+        signature_u64_data.reverse();
+        let signature_u8_data = signature_u64_data
+            .iter()
+            .flat_map(|u| u.to_be_bytes())
+            .collect::<Vec<u8>>();
 
-        assert_eq!(public_key, should_be_public_key);
+        let secp256k1_signature =
+            Signature::from_compact(&signature_u8_data).expect("Failed to parse signature");
+
+        assert!(secp
+            .verify_ecdsa(&secp256k1_msg, &secp256k1_signature, &secp256k1_public_key)
+            .is_ok());
 
         // let message = msg
         //     .0
