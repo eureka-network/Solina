@@ -4,5 +4,5 @@ use plonky2_ecdsa::curve::ecdsa::{ECDSASecretKey, ECDSASignature};
 
 pub(crate) trait Intent {
     fn structured_hash(&self) -> StructuredHash;
-    fn sign_intent(&self, private_key: BigUint) -> ECDSASignature<C>;
+    // fn sign_intent(&self, private_key: BigUint) -> ECDSASignature<C>;
 }
