@@ -12,7 +12,7 @@ use rand::rngs::OsRng;
 
 use crate::{error::TypeConversionError, utils::convert_u64_le_to_u8_be};
 
-pub struct PrivateKey(pub(crate) SecretKey);
+pub struct PrivateKey(pub SecretKey);
 
 impl PrivateKey {
     /// Initializes a [`PrivateKey`] randomly
@@ -55,7 +55,7 @@ impl PrivateKey {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct PublicKey(pub(crate) libsecp256k1::PublicKey);
+pub struct PublicKey(pub libsecp256k1::PublicKey);
 
 impl PublicKey {
     pub fn from_private_key(private_key: &PrivateKey) -> Self {
@@ -102,7 +102,7 @@ impl PublicKey {
     }
 }
 
-pub struct Message(pub(crate) libsecp256k1::Message);
+pub struct Message(pub libsecp256k1::Message);
 
 impl Message {
     pub fn new_message(data: [u8; 32]) -> Self {
@@ -126,7 +126,7 @@ impl Message {
 }
 
 #[derive(Clone)]
-pub struct Signature(pub(crate) libsecp256k1::Signature);
+pub struct Signature(pub libsecp256k1::Signature);
 
 impl Signature {
     pub fn into_plonky2_signature(self) -> ECDSASignature<Secp256K1> {
@@ -143,10 +143,14 @@ impl Signature {
 
 #[cfg(test)]
 mod tests {
+    use eth_wallet::wallet::{generate_random_message, verify_signature, ETHWallet, Wallet};
+    use libsecp256k1::curve::Scalar;
     use plonky2::field::{
         secp256k1_scalar::Secp256K1Scalar,
         types::{PrimeField, Sample},
     };
+    use plonky2_ecdsa::curve::ecdsa::verify_message;
+    use rand::{rngs::OsRng, RngCore};
 
     use super::*;
 
@@ -215,5 +219,23 @@ mod tests {
         let public_key = PublicKey::from_private_key(&private_key);
         let plonky2_public_key = public_key.into_plonky2_public_key();
         assert_eq!(plonky2_public_key, should_be_plonky2_public_key);
+    }
+
+    #[test]
+    fn it_works_signature_scheme_libsecp256k1_plonky2_conversion() {
+        let wallet = Wallet::initialize_new_wallet();
+        let message = generate_random_message();
+        let signature = wallet.sign_message(&message);
+        let public_key = wallet.get_public_key();
+
+        let plonky2_message = message.into_plonky2_message();
+        let plonky2_public_key = public_key.into_plonky2_public_key();
+        let plonky2_signature = signature.clone().into_plonky2_signature();
+
+        assert!(verify_message(
+            plonky2_message,
+            plonky2_signature,
+            plonky2_public_key
+        ));
     }
 }

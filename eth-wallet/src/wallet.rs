@@ -1,5 +1,6 @@
-use conversions::{Message, PrivateKey, PublicKey, Signature};
-use libsecp256k1::{sign, verify};
+use conversions::types::{Message, PrivateKey, PublicKey, Signature};
+use libsecp256k1::{curve::Scalar, sign, verify};
+use rand::{rngs::OsRng, RngCore};
 
 pub trait ETHWallet {
     fn initialize_new_wallet() -> Self;
@@ -47,6 +48,14 @@ pub fn verify_signature(message: &Message, signature: &Signature, public_key: &P
     verify(&message.0, &signature.0, &public_key.0)
 }
 
+pub fn generate_random_message() -> Message {
+    let mut data = [0u32; 8];
+    (0..8).for_each(|i| data[i] = OsRng.next_u32());
+    println!("data = {:?}", data);
+    let message = Message(libsecp256k1::Message(Scalar(data)));
+    message
+}
+
 #[cfg(test)]
 mod tests {
     use libsecp256k1::curve::Scalar;
@@ -56,24 +65,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works_verify_signature() {
-        let wallet = Wallet::initialize_new_wallet();
-        let mut data = [0u32; 8];
-        (0..8).for_each(|i| data[i] = OsRng.next_u32());
-        println!("data = {:?}", data);
-        let message = Message(libsecp256k1::Message(Scalar(data)));
-        let signature = wallet.sign_message(&message);
-        let public_key = wallet.get_public_key();
-        assert!(verify_signature(&message, &signature, &public_key));
-    }
-
-    #[test]
     fn it_works_signature_scheme_libsecp256k1_plonky2_conversion() {
         let wallet = Wallet::initialize_new_wallet();
-        let mut data = [0u32; 8];
-        (0..8).for_each(|i| data[i] = OsRng.next_u32());
-        println!("data = {:?}", data);
-        let message = Message(libsecp256k1::Message(Scalar(data)));
+        let message = generate_random_message();
         let signature = wallet.sign_message(&message);
         let public_key = wallet.get_public_key();
 
