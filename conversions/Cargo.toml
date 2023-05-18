@@ -1,12 +1,11 @@
 [package]
-name = "eth-wallet"
+name = "conversions"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-conversions = { path = "../conversions" }
 hex-literal = "0.4.1"
 intent = { path = "../intent/" }
 libsecp256k1 = "0.7.1"
