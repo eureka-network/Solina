@@ -111,7 +111,7 @@ mod tests {
             .flat_map(|u| u.to_le_bytes())
             .collect::<Vec<u8>>();
 
-        plonky2_ecdsa_gen_x_u64.reverse();
+        // plonky2_ecdsa_gen_x_u64.reverse();
 
         // x coordinate generator used in secp256k1 rust library,
         // in big little endian representation. See documentation
