@@ -2,6 +2,8 @@ use plonky2_ecdsa::gadgets::biguint::BigUintTarget;
 use crate::StructuredHash;
 /// Intent to swap tokens 
 /// todo[ben]: this is incomplete, but let's focus on the pathways first
+
+#[allow(dead_code)]
 pub struct SwapIntent {
     /// address
     from: BigUintTarget,

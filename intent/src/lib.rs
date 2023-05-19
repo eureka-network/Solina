@@ -11,4 +11,5 @@ pub const D: usize = 2;
 pub(crate) type C = Secp256K1;
 pub type F = GoldilocksField;
 pub type FF = Secp256K1Scalar;
+#[allow(dead_code)]
 pub(crate) type StructuredHash = [u8; 32];
