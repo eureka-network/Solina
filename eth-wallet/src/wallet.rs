@@ -58,9 +58,7 @@ pub fn generate_random_message() -> Message {
 
 #[cfg(test)]
 mod tests {
-    use libsecp256k1::curve::Scalar;
     use plonky2_ecdsa::curve::ecdsa::verify_message;
-    use rand::{rngs::OsRng, RngCore};
 
     use super::*;
 

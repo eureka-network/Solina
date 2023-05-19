@@ -143,14 +143,12 @@ impl Signature {
 
 #[cfg(test)]
 mod tests {
-    use eth_wallet::wallet::{generate_random_message, verify_signature, ETHWallet, Wallet};
-    use libsecp256k1::curve::Scalar;
+    use eth_wallet::wallet::{generate_random_message, ETHWallet, Wallet};
     use plonky2::field::{
         secp256k1_scalar::Secp256K1Scalar,
         types::{PrimeField, Sample},
     };
     use plonky2_ecdsa::curve::ecdsa::verify_message;
-    use rand::{rngs::OsRng, RngCore};
 
     use super::*;
 

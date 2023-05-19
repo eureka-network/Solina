@@ -1,6 +1,5 @@
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2_ecdsa::gadgets::{
-    biguint::BigUintTarget,
     curve::CircuitBuilderCurve,
     ecdsa::{verify_message_circuit, ECDSAPublicKeyTarget, ECDSASignatureTarget},
     nonnative::{CircuitBuilderNonNative, NonNativeTarget},

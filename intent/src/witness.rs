@@ -1,8 +1,5 @@
 use plonky2::{
-    field::types::{Field, PrimeField},
-    hash::{hash_types::HashOut, poseidon::PoseidonHash},
-    iop::witness::{PartialWitness, WitnessWrite},
-    plonk::{circuit_builder::CircuitBuilder, config::Hasher},
+    field::types::PrimeField, iop::witness::PartialWitness, plonk::circuit_builder::CircuitBuilder,
 };
 use plonky2_ecdsa::{
     curve::ecdsa::{ECDSAPublicKey, ECDSASignature},
