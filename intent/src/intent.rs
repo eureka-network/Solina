@@ -1,7 +1,8 @@
-use plonky2_ecdsa::gadgets::{ecdsa::ECDSASignatureTarget, biguint::BigUintTarget};
-use crate::{FF, StructuredHash};
+use crate::{StructuredHash, C};
+use num_bigint::BigUint;
+use plonky2_ecdsa::curve::ecdsa::ECDSASignature;
 
-pub trait Intent {
+pub(crate) trait Intent {
     fn structured_hash(&self) -> StructuredHash;
-    fn sign_intent(&self, private_key: BigUintTarget) -> ECDSASignatureTarget<FF>;
+    fn sign_intent(&self, private_key: BigUint) -> ECDSASignature<C>;
 }

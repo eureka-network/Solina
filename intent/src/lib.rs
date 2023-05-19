@@ -1,9 +1,15 @@
-use plonky2::field::secp256k1_scalar::Secp256K1Scalar;
+use plonky2::field::{goldilocks_field::GoldilocksField, secp256k1_scalar::Secp256K1Scalar};
 use plonky2_ecdsa::curve::secp256k1::Secp256K1;
 
+pub mod circuit;
 mod intent;
 mod swap_intent;
+pub mod witness;
+
+pub const D: usize = 2;
 
 pub(crate) type C = Secp256K1;
-pub(crate) type FF = Secp256K1Scalar;
+pub type F = GoldilocksField;
+pub type FF = Secp256K1Scalar;
+#[allow(dead_code)]
 pub(crate) type StructuredHash = [u8; 32];
