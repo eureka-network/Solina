@@ -1,7 +1,4 @@
-use plonky2_ecdsa::curve::{
-    ecdsa::{ECDSASecretKey, ECDSASignature},
-    secp256k1::Secp256K1,
-};
+use conversions::types::{PrivateKey, Signature};
 
 /// Reference enum from a label to the actual
 /// computation execution, and a proof generation
@@ -18,7 +15,7 @@ pub(crate) trait Intent {
         constraints: Self::Constraints,
         execute_runtime: ExecuteRuntime,
     ) -> Self;
-    fn sign_intent(&self, private_key: ECDSASecretKey<Secp256K1>) -> ECDSASignature<Secp256K1>;
+    fn sign_intent(&self, private_key: PrivateKey) -> Signature;
     fn get_constraints(&self) -> Self::Constraints;
     fn get_inputs(&self) -> Self::Inputs;
     fn get_runtime_execution(&self) -> ExecuteRuntime;

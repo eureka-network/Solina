@@ -2,13 +2,9 @@ use crate::{
     intent::{ExecuteRuntime, Intent},
     structured_hash::StructuredHashInterface,
 };
+use conversions::types::{Message, PrivateKey, Signature};
 use keccak_hash::keccak;
 use num_bigint::BigUint;
-use plonky2::field::{secp256k1_scalar::Secp256K1Scalar, types::Field};
-use plonky2_ecdsa::curve::{
-    ecdsa::{sign_message, ECDSASecretKey, ECDSASignature},
-    secp256k1::Secp256K1,
-};
 
 /// Inputs for a swap
 #[derive(Clone, Debug)]
@@ -97,10 +93,10 @@ impl Intent for SwapIntent {
         ExecuteRuntime::Swap
     }
 
-    fn sign_intent(&self, private_key: ECDSASecretKey<Secp256K1>) -> ECDSASignature<Secp256K1> {
+    fn sign_intent(&self, private_key: PrivateKey) -> Signature {
         let message = <Self as StructuredHashInterface>::structured_hash(&self);
-        let message = Secp256K1Scalar::from_noncanonical_biguint(BigUint::from_bytes_le(&message));
-        sign_message(message, private_key)
+        let message = Message::new_message(message);
+        Signature::sign_message(&private_key, &message)
     }
 }
 

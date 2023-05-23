@@ -3,5 +3,4 @@ members = [
     "conversions",
     "eth-wallet",
     "intent",
-    "mock-wallet",
 ]

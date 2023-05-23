@@ -139,6 +139,10 @@ impl Signature {
             s: Secp256K1Scalar::from_noncanonical_biguint(BigUint::from_bytes_be(&s)),
         }
     }
+
+    pub fn sign_message(private_key: &PrivateKey, message: &Message) -> Self {
+        Self(libsecp256k1::sign(&message.0, &private_key.0).0)
+    }
 }
 
 #[cfg(test)]
