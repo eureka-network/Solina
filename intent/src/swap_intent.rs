@@ -152,4 +152,63 @@ mod tests {
             )
         );
     }
+
+    #[test]
+    fn it_works_swap_inputs_struct_hash() {
+        let inputs = SwapInputs {
+            from: BigUint::from(255_u8),
+            quote_amount: BigUint::from(1_000_000_000_000_u64),
+            quote_token: BigUint::from(125_u8),
+            base_token: BigUint::from(64_u8),
+        };
+
+        let hash = inputs.structured_hash();
+        assert_eq!(
+            hash,
+            [
+                126, 86, 247, 94, 241, 128, 11, 135, 109, 40, 77, 80, 206, 253, 220, 155, 53, 150,
+                223, 40, 115, 143, 244, 95, 235, 2, 254, 190, 192, 6, 140, 55
+            ]
+        );
+    }
+
+    #[test]
+    fn it_works_swap_constraints_struct_hash() {
+        let constraints = SwapConstraints {
+            min_base_token_amount: BigUint::from(64_u8),
+        };
+
+        let hash = constraints.structured_hash();
+        assert_eq!(
+            hash,
+            [
+                234, 72, 17, 64, 171, 119, 130, 160, 214, 239, 34, 138, 193, 55, 126, 70, 99, 51,
+                17, 186, 102, 158, 246, 83, 37, 222, 43, 39, 99, 185, 141, 28
+            ]
+        );
+    }
+
+    #[test]
+    fn it_works_swap_intent_struct_hash() {
+        let intent = SwapIntent {
+            inputs: SwapInputs {
+                from: BigUint::from(255_u8),
+                quote_amount: BigUint::from(1_000_000_000_000_u64),
+                quote_token: BigUint::from(125_u8),
+                base_token: BigUint::from(64_u8),
+            },
+            constraints: SwapConstraints {
+                min_base_token_amount: BigUint::from(64_u8),
+            },
+        };
+
+        let hash = intent.structured_hash();
+        assert_eq!(
+            hash,
+            [
+                24, 7, 244, 62, 67, 231, 160, 144, 114, 93, 215, 149, 57, 133, 112, 81, 234, 3,
+                143, 145, 52, 65, 214, 237, 255, 135, 67, 93, 177, 253, 129, 211
+            ]
+        );
+    }
 }
