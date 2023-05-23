@@ -25,7 +25,7 @@ pub(crate) struct SwapInputs {
 
 impl StructuredHashInterface for SwapInputs {
     fn type_encode() -> String {
-        "SwapInputs(BigUint from, BigUint quote_token, BigUint base_token, BigUint quote_amount)"
+        "SwapInputs(BigUint from,BigUint quote_token,BigUint base_token,BigUint quote_amount)"
             .to_string()
     }
     fn data_encode(&self) -> Vec<u8> {
@@ -107,9 +107,9 @@ impl Intent for SwapIntent {
 impl StructuredHashInterface for SwapIntent {
     fn type_encode() -> String {
         let input_type_encoding = SwapInputs::type_encode();
-        let constraints_type_encoding = SwapInputs::type_encode();
+        let constraints_type_encoding = SwapConstraints::type_encode();
         format!(
-            "SwapIntent(SwapInputs inputs, SwapConstraints constraints){}{}",
+            "SwapIntent(SwapInputs inputs,SwapConstraints constraints){}{}",
             constraints_type_encoding, input_type_encoding
         )
     }
@@ -118,5 +118,38 @@ impl StructuredHashInterface for SwapIntent {
         let input_data_encoding = self.inputs.structured_hash();
         let constraints_data_encoding = self.constraints.structured_hash();
         [input_data_encoding, constraints_data_encoding].concat()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_works_swap_inputs_type_encoding() {
+        assert_eq!(
+            SwapInputs::type_encode().as_str(),
+            "SwapInputs(BigUint from,BigUint quote_token,BigUint base_token,BigUint quote_amount)"
+        );
+    }
+
+    #[test]
+    fn it_works_swap_constraints_type_encoding() {
+        assert_eq!(
+            SwapConstraints::type_encode().as_str(),
+            "SwapConstraints(BigUint min_base_token_amount)"
+        );
+    }
+
+    #[test]
+    fn it_works_swap_intent_type_encoding() {
+        assert_eq!(
+            SwapIntent::type_encode(),
+            format!(
+                "SwapIntent(SwapInputs inputs,SwapConstraints constraints){}{}",
+                SwapConstraints::type_encode(),
+                SwapInputs::type_encode(),
+            )
+        );
     }
 }
