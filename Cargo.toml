@@ -4,4 +4,5 @@ members = [
     "eth-wallet",
     "intent",
     "mock-wallet",
+    "structured-hash",
 ]
