@@ -6,6 +6,13 @@ use conversions::types::{Message, PrivateKey, Signature};
 use keccak_hash::keccak;
 use num_bigint::BigUint;
 
+#[derive(Clone, Copy, Debug)]
+#[allow(dead_code)]
+pub(crate) enum SwapDirection {
+    Buy,
+    Sell,
+}
+
 /// Inputs for a swap
 #[derive(Clone, Debug)]
 pub(crate) struct SwapInputs {
@@ -17,6 +24,8 @@ pub(crate) struct SwapInputs {
     base_token: BigUint,
     /// quote amount
     quote_amount: BigUint,
+    /// trade direction
+    direction: SwapDirection,
 }
 
 impl StructuredHashInterface for SwapInputs {
@@ -29,12 +38,14 @@ impl StructuredHashInterface for SwapInputs {
         let quote_token_hash = keccak(&self.quote_token.to_bytes_be()).to_fixed_bytes();
         let base_token_hash = keccak(&self.base_token.to_bytes_be()).to_fixed_bytes();
         let quote_amount_hash = keccak(&self.quote_amount.to_bytes_be()).to_fixed_bytes();
+        let direction = keccak(&[self.direction as u8]).to_fixed_bytes();
 
         [
             from_hash,
             quote_token_hash,
             base_token_hash,
             quote_amount_hash,
+            direction,
         ]
         .concat()
     }
@@ -156,14 +167,15 @@ mod tests {
             quote_amount: BigUint::from(1_000_000_000_000_u64),
             quote_token: BigUint::from(125_u8),
             base_token: BigUint::from(64_u8),
+            direction: SwapDirection::Buy,
         };
 
         let hash = inputs.structured_hash();
         assert_eq!(
             hash,
             [
-                126, 86, 247, 94, 241, 128, 11, 135, 109, 40, 77, 80, 206, 253, 220, 155, 53, 150,
-                223, 40, 115, 143, 244, 95, 235, 2, 254, 190, 192, 6, 140, 55
+                186, 101, 125, 97, 49, 232, 81, 6, 161, 29, 40, 233, 194, 228, 236, 187, 13, 240,
+                22, 165, 28, 19, 253, 103, 191, 74, 123, 112, 246, 125, 183, 139
             ]
         );
     }
@@ -192,6 +204,7 @@ mod tests {
                 quote_amount: BigUint::from(1_000_000_000_000_u64),
                 quote_token: BigUint::from(125_u8),
                 base_token: BigUint::from(64_u8),
+                direction: SwapDirection::Buy,
             },
             constraints: SwapConstraints {
                 min_base_token_amount: BigUint::from(64_u8),
@@ -202,8 +215,8 @@ mod tests {
         assert_eq!(
             hash,
             [
-                24, 7, 244, 62, 67, 231, 160, 144, 114, 93, 215, 149, 57, 133, 112, 81, 234, 3,
-                143, 145, 52, 65, 214, 237, 255, 135, 67, 93, 177, 253, 129, 211
+                189, 82, 148, 152, 172, 104, 0, 13, 64, 1, 22, 117, 178, 200, 200, 168, 243, 142,
+                13, 152, 208, 63, 125, 179, 210, 98, 124, 23, 39, 58, 92, 19
             ]
         );
     }
