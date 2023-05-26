@@ -1,11 +1,11 @@
 use conversions::types::{Message, PrivateKey, PublicKey, Signature};
-use libsecp256k1::{curve::Scalar, sign, verify};
-use rand::{rngs::OsRng, RngCore};
+use libsecp256k1::{sign, verify};
+use rand::Rng;
 
 pub trait ETHWallet {
     fn initialize_new_wallet() -> Self;
     fn initialize_from_private_key(private_key: PrivateKey) -> Self;
-    fn sign_message(&self, message: &Message) -> Signature;
+    fn sign_message(self, message: &Message) -> Signature;
     fn get_public_key(&self) -> PublicKey;
 }
 
@@ -35,24 +35,30 @@ impl ETHWallet for Wallet {
     }
 
     fn get_public_key(&self) -> PublicKey {
-        PublicKey(self.public_key.0.clone())
+        self.public_key.clone()
     }
 
-    fn sign_message(&self, message: &Message) -> Signature {
-        let (signature, _) = sign(&message.0, &self.private_key.0);
-        Signature(signature)
+    fn sign_message(self, message: &Message) -> Signature {
+        let (signature, _) = sign(
+            message.as_libsecp256k1_message(),
+            &self.private_key.into_secret_key(),
+        );
+        Signature::new(signature)
     }
 }
 
 pub fn verify_signature(message: &Message, signature: &Signature, public_key: &PublicKey) -> bool {
-    verify(&message.0, &signature.0, &public_key.0)
+    verify(
+        message.as_libsecp256k1_message(),
+        signature.as_libsecp256k1_signature(),
+        public_key.as_libsecp256k1_public_key(),
+    )
 }
 
 pub fn generate_random_message() -> Message {
-    let mut data = [0u32; 8];
-    (0..8).for_each(|i| data[i] = OsRng.next_u32());
+    let data = rand::thread_rng().gen::<[u8; 32]>();
     println!("data = {:?}", data);
-    let message = Message(libsecp256k1::Message(Scalar(data)));
+    let message = Message::new_message(data);
     message
 }
 
@@ -66,8 +72,28 @@ mod tests {
     fn it_works_signature_scheme_libsecp256k1_plonky2_conversion() {
         let wallet = Wallet::initialize_new_wallet();
         let message = generate_random_message();
-        let signature = wallet.sign_message(&message);
         let public_key = wallet.get_public_key();
+
+        let signature = wallet.sign_message(&message);
+
+        let plonky2_message = message.into_plonky2_message();
+        let plonky2_public_key = public_key.into_plonky2_public_key();
+        let plonky2_signature = signature.clone().into_plonky2_signature();
+
+        assert!(verify_message(
+            plonky2_message,
+            plonky2_signature,
+            plonky2_public_key
+        ));
+    }
+
+    #[test]
+    fn it_works_signature_scheme_libsecp256k1_plonky2_wallet() {
+        let wallet = Wallet::initialize_new_wallet();
+        let message = generate_random_message();
+        let public_key = wallet.get_public_key();
+
+        let signature = wallet.sign_message(&message);
 
         let plonky2_message = message.into_plonky2_message();
         let plonky2_public_key = public_key.into_plonky2_public_key();
