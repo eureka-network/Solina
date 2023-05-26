@@ -1,23 +1,26 @@
-use conversions::types::{Message, PrivateKey, Signature};
+use conversions::types::{Message, PrivateKey, PublicKey, Signature};
 use plonky2::{
-    field::extension::Extendable,
-    hash::hash_types::RichField,
     iop::witness::PartialWitness,
-    plonk::{circuit_builder::CircuitBuilder, config::GenericConfig, proof::ProofWithPublicInputs},
+    plonk::{
+        circuit_builder::CircuitBuilder,
+        circuit_data::{CircuitConfig, CommonCircuitData, VerifierOnlyCircuitData},
+        config::GenericConfig,
+        proof::ProofWithPublicInputs,
+    },
 };
 
 use crate::{
     circuit::ECDSAIntentCircuit, structured_hash::StructuredHashInterface,
-    witness::ECDSAIntentWitness,
+    witness::ECDSAIntentWitness, D, F,
 };
 
 /// Reference enum from a label to the actual
 /// computation execution, and a proof generation
-pub(crate) enum ExecuteRuntime {
+pub enum ExecuteRuntime {
     Swap,
 }
 
-pub(crate) trait Intent {
+pub trait Intent {
     type Inputs;
     type Constraints;
 
@@ -32,19 +35,48 @@ pub(crate) trait Intent {
     fn get_runtime_execution(&self) -> ExecuteRuntime;
 }
 
-// fn generate_intent_signature_proof<F, C, I, const D: usize>(
-//     circuit_builder: &mut CircuitBuilder<F, D>,
-//     partial_witness: &mut PartialWitness<F>,
-//     intent: I,
-//     signature: Signature,
-// ) -> ProofWithPublicInputs<F, C, D>
-// where
-//     F: RichField + Extendable<D>,
-//     C: GenericConfig<D>,
-//     I: StructuredHashInterface + Intent,
-// {
-//     let signature_targets = circuit_builder.verify_intent_signature();
-//     // let message = Message::intent.structured_hash();
+#[allow(dead_code)]
+pub struct SignatureProofData<C: GenericConfig<D, F = F>> {
+    pub proof_with_pis: ProofWithPublicInputs<F, C, D>,
+    pub common: CommonCircuitData<F, D>,
+    pub verifier_only: VerifierOnlyCircuitData<C, D>,
+}
 
-//     partial_witness.verify_signed_intent(circuit_builder);
-// }
+#[allow(dead_code)]
+pub fn generate_intent_signature_proof<C, I>(
+    intent: I,
+    public_key: PublicKey,
+    signature: Signature,
+) -> Result<SignatureProofData<C>, anyhow::Error>
+where
+    C: GenericConfig<D, F = F>,
+    I: StructuredHashInterface + Intent,
+{
+    let config = CircuitConfig::standard_ecc_config();
+    let mut circuit_builder = CircuitBuilder::new(config);
+    let mut partial_witness = PartialWitness::<F>::new();
+
+    let signature_targets = circuit_builder.verify_intent_signature();
+    let message = Message::from_slice(&intent.structured_hash())?;
+
+    let message_conversion = message.into_plonky2_message();
+    let public_key_conversion = public_key.into_plonky2_public_key();
+    let signature_conversion = signature.into_plonky2_signature();
+
+    partial_witness.verify_signed_intent(
+        &mut circuit_builder,
+        message_conversion,
+        public_key_conversion,
+        signature_conversion,
+        signature_targets,
+    );
+
+    let circuit_data = circuit_builder.build::<C>();
+    let proof_with_pis = circuit_data.prove(partial_witness.clone())?;
+
+    Ok(SignatureProofData {
+        proof_with_pis,
+        common: circuit_data.common,
+        verifier_only: circuit_data.verifier_only,
+    })
+}

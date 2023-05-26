@@ -15,7 +15,7 @@ pub(crate) enum SwapDirection {
 
 /// Inputs for a swap
 #[derive(Clone, Debug)]
-pub(crate) struct SwapInputs {
+pub struct SwapInputs {
     /// address
     from: BigUint,
     /// quote token
@@ -53,7 +53,7 @@ impl StructuredHashInterface for SwapInputs {
 
 /// Constraints for a swap
 #[derive(Clone, Debug)]
-pub(crate) struct SwapConstraints {
+pub struct SwapConstraints {
     /// max slippage amount
     min_base_token_amount: BigUint,
 }
@@ -73,8 +73,8 @@ impl StructuredHashInterface for SwapConstraints {
 /// todo[ben]: this is incomplete, but let's focus on the pathways first
 #[allow(dead_code)]
 pub struct SwapIntent {
-    inputs: SwapInputs,
-    constraints: SwapConstraints,
+    pub inputs: SwapInputs,
+    pub constraints: SwapConstraints,
 }
 
 impl Intent for SwapIntent {
