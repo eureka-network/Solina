@@ -5,6 +5,16 @@ use crate::{
     D, F,
 };
 
+#[allow(dead_code)]
+pub struct IntentSignature<T, C>
+where
+    T: Intent,
+    C: GenericConfig<D, F = F>,
+{
+    intent: T,
+    signature_proof_data: SignatureProofData<C>,
+}
+
 pub trait Solver<T>
 where
     T: Intent,
@@ -15,7 +25,7 @@ where
     fn generate_execute_proof<C: GenericConfig<D, F = F>>(
         &self,
         circuit_builder: &mut CircuitBuilder<F, D>,
-        intents: Vec<(T, SignatureProofData<C>)>,
+        intents: Vec<IntentSignature<T, C>>,
     ) -> Result<(), anyhow::Error>;
     fn verify_intents_signatures(&self, intents: Vec<T>) -> Result<(), anyhow::Error>;
 }

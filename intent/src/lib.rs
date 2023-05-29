@@ -6,6 +6,7 @@ mod intent;
 pub mod solver;
 pub mod structured_hash;
 mod swap_intent;
+mod swap_solver;
 pub mod witness;
 
 pub const D: usize = 2;
