@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.71"
 
+binary_search_tree = "0.2.2"
 conversions = { path = "../conversions" }
 hex-literal = "0.4.1"
 keccak-hash = "0.10.0"

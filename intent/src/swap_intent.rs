@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use crate::{
     intent::{ExecuteRuntime, Intent},
     structured_hash::StructuredHashInterface,
@@ -6,26 +8,37 @@ use conversions::types::{Message, PrivateKey, Signature};
 use keccak_hash::keccak;
 use num_bigint::BigUint;
 
-#[derive(Clone, Copy, Debug)]
+pub type Price = BigUint;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[allow(dead_code)]
-pub(crate) enum SwapDirection {
-    Buy,
-    Sell,
+pub enum SwapDirection {
+    Buy = 0,
+    Sell = 1,
+}
+
+impl SwapDirection {
+    pub(crate) fn as_bool(self) -> bool {
+        match self {
+            Self::Buy => false,
+            Self::Sell => true,
+        }
+    }
 }
 
 /// Inputs for a swap
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SwapInputs {
     /// address
-    from: BigUint,
+    pub from: BigUint,
     /// quote token
-    quote_token: BigUint,
+    pub quote_token: BigUint,
     /// base token
-    base_token: BigUint,
+    pub base_token: BigUint,
     /// quote amount
-    quote_amount: BigUint,
+    pub quote_amount: BigUint,
     /// trade direction
-    direction: SwapDirection,
+    pub direction: SwapDirection,
 }
 
 impl StructuredHashInterface for SwapInputs {
@@ -52,10 +65,10 @@ impl StructuredHashInterface for SwapInputs {
 }
 
 /// Constraints for a swap
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SwapConstraints {
     /// max slippage amount
-    min_base_token_amount: BigUint,
+    pub min_base_token_amount: BigUint,
 }
 
 impl StructuredHashInterface for SwapConstraints {
@@ -71,6 +84,7 @@ impl StructuredHashInterface for SwapConstraints {
 
 /// Intent to swap tokens
 /// todo[ben]: this is incomplete, but let's focus on the pathways first
+#[derive(Debug, Clone, Eq, PartialEq)]
 #[allow(dead_code)]
 pub struct SwapIntent {
     pub inputs: SwapInputs,
@@ -125,6 +139,25 @@ impl StructuredHashInterface for SwapIntent {
         let input_data_encoding = self.inputs.structured_hash();
         let constraints_data_encoding = self.constraints.structured_hash();
         [input_data_encoding, constraints_data_encoding].concat()
+    }
+}
+
+impl SwapIntent {
+    pub fn get_price(&self) -> Price {
+        // For now, price is computed directly as quote_amount / base_amount
+        self.inputs.quote_amount.clone() / self.constraints.min_base_token_amount.clone()
+    }
+}
+
+impl PartialOrd for SwapIntent {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.get_price().cmp(&other.get_price()))
+    }
+}
+
+impl Ord for SwapIntent {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap()
     }
 }
 
