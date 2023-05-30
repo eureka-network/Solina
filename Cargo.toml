@@ -2,5 +2,6 @@
 members = [
     "eth-wallet",
     "intent",
-    "types"
+    "types",
+    "merkle-tree",
 ]
