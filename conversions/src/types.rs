@@ -51,6 +51,10 @@ impl PrivateKey {
             .map_err(|e| TypeConversionError::InvalidLibSecp256K1TypeConversion(e))?;
         Ok(Self(libsecp256k1_sk))
     }
+
+    pub fn sign_message(&self, message: &Message) -> Signature {
+        Signature(libsecp256k1::sign(&message.0, &self.0).0)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -164,10 +168,6 @@ impl Signature {
             r: Secp256K1Scalar::from_noncanonical_biguint(BigUint::from_bytes_be(&r)),
             s: Secp256K1Scalar::from_noncanonical_biguint(BigUint::from_bytes_be(&s)),
         }
-    }
-
-    pub fn sign_message(private_key: &PrivateKey, message: &Message) -> Self {
-        Self(libsecp256k1::sign(&message.0, &private_key.0).0)
     }
 }
 

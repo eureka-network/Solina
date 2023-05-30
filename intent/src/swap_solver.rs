@@ -1,29 +1,22 @@
 use anyhow::anyhow;
 use binary_search_tree::BinarySearchTree;
-use num_bigint::BigUint;
 use plonky2::{
-    field::types::Field,
-    iop::{target::BoolTarget, witness::PartialWitness},
-    plonk::{
-        circuit_builder::CircuitBuilder,
-        circuit_data::{CommonCircuitData, VerifierCircuitData},
-        config::PoseidonGoldilocksConfig,
-        proof::ProofWithPublicInputs,
-    },
+    hash::{merkle_tree::MerkleCap, poseidon::PoseidonHash},
+    iop::target::BoolTarget,
+    plonk::{circuit_builder::CircuitBuilder, config::PoseidonGoldilocksConfig},
 };
-use plonky2_ecdsa::{curve::curve_types::base_to_scalar, gadgets::biguint::CircuitBuilderBiguint};
+use plonky2_ecdsa::gadgets::biguint::CircuitBuilderBiguint;
 
 use crate::{
-    circuit::{self, ECDSAIntentCircuit},
-    intent,
-    solver::{IntentSignature, ProofVerifyData, Solver, SolverRuntimeExec},
-    swap_intent::{Price, SwapDirection, SwapIntent},
+    circuit::ECDSAIntentCircuit,
+    solver::{IntentSignature, ProofVerifyData, Solver},
+    swap_intent::SwapIntent,
     D, F,
 };
 
 /// Struct encapsulating swap intents. Currently, ordering of intents is kept by ordering
 /// both buy and sell orders. One could optimize this, using balanced binary trees,
-pub struct SwapSolver {
+pub struct SwapState {
     /// Queue of stored intents, for buying orders. This could be stored in a distribued data structured,
     /// but for now, we assume that each solver contains its own (local) queue. We further
     /// assume that this data structure is ordered, with descending price order, in a binary tree.
@@ -34,45 +27,31 @@ pub struct SwapSolver {
     sell_order_intents: BinarySearchTree<SwapIntent>,
 }
 
+/// Swap state commitments, for buy and sell intents, simultaneously.
+pub struct SwapStateCommitment {
+    buy_intent_commitment: MerkleCap<F, PoseidonHash>,
+    sell_intent_commitment: MerkleCap<F, PoseidonHash>,
+}
+
+pub struct SwapSolver;
+
 impl Solver<SwapIntent> for SwapSolver {
-    type Output = Price;
+    type State = SwapState;
+    type StateCommitment = SwapStateCommitment;
 
-    fn queue_intent(&mut self, intent: SwapIntent) {
-        if let SwapDirection::Buy = intent.inputs.direction {
-            self.buy_order_intents.insert(intent);
-        } else {
-            self.sell_order_intents.insert(intent);
-        }
-    }
-
-    fn execute_runtime(
-        &self,
-        intent: SwapIntent,
-        partial_witness: &mut PartialWitness<F>,
-    ) -> Self::Output {
-        // if let SwapDirection::Buy = intent.inputs.direction {
-        //     for i in self.sell_order_intents.inorder() {
-        //         match intent.cmp(i) {
-        //             Ordering::Less => continue,
-        //             _ => {
-        //                 // match orders
-        //             }
-        //         }
-        //     }
-        // } else {
-        // }
+    fn commit_to_current_state(&self) -> Self::StateCommitment {
         todo!()
     }
 
-    fn generate_execute_proof(
-        &self,
-        circuit_builder: &mut plonky2::plonk::circuit_builder::CircuitBuilder<F, D>,
-        partial_witness: &mut plonky2::iop::witness::PartialWitness<crate::F>,
-    ) -> Result<(), anyhow::Error> {
-        todo!();
+    fn current_state(&self) -> Self::State {
+        todo!()
     }
 
-    fn verify_intents_signatures(&self, intents: Vec<SwapIntent>) -> Result<(), anyhow::Error> {
+    fn execute_on_new_intent(&mut self, intent: SwapIntent) -> Self::State {
+        todo!()
+    }
+
+    fn generate_state_proof(&self, circuit_builder: &CircuitBuilder<F, D>) -> ProofVerifyData {
         todo!()
     }
 }
@@ -81,7 +60,7 @@ pub struct SwapSolverRuntimeExec {
     circuit_builder: CircuitBuilder<F, D>,
 }
 
-impl SolverRuntimeExec<SwapIntent> for SwapSolverRuntimeExec {
+impl SwapSolverRuntimeExec {
     fn generate_current_execution_state_circuit(
         &self,
         circuit_builder: &mut CircuitBuilder<F, D>,
@@ -160,6 +139,8 @@ impl SolverRuntimeExec<SwapIntent> for SwapSolverRuntimeExec {
 
         // 5. We don't need to verify signature proofs, this only needs to be done at each state transition
 
+        // 6. Create a Merkle tree from the hashes in 1.
+
         todo!();
     }
 
@@ -185,7 +166,7 @@ impl SolverRuntimeExec<SwapIntent> for SwapSolverRuntimeExec {
             &inner_common_data,
         );
 
-        // 3.
+        // 3. Build Merkle Tree
 
         todo!();
     }

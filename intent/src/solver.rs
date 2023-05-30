@@ -1,12 +1,7 @@
-use plonky2::{
-    iop::witness::PartialWitness,
-    plonk::{
-        circuit_builder::CircuitBuilder,
-        circuit_data::CommonCircuitData,
-        circuit_data::{VerifierCircuitData, VerifierCircuitTarget},
-        config::PoseidonGoldilocksConfig,
-        proof::{ProofWithPublicInputs, ProofWithPublicInputsTarget},
-    },
+use plonky2::plonk::{
+    circuit_builder::CircuitBuilder, circuit_data::CommonCircuitData,
+    circuit_data::VerifierCircuitTarget, config::PoseidonGoldilocksConfig,
+    proof::ProofWithPublicInputsTarget,
 };
 
 use crate::{
@@ -27,39 +22,28 @@ pub trait Solver<T>
 where
     T: Intent,
 {
-    type Output;
+    type State;
+    type StateCommitment;
 
-    fn queue_intent(&mut self, intent: T);
-    fn execute_runtime(&self, intent: T, partial_witness: &mut PartialWitness<F>) -> Self::Output;
-    fn generate_execute_proof(
-        &self,
+    fn current_state(&self) -> Self::State;
+    fn execute_on_new_intent(&mut self, intent: T) -> Self::State;
+    fn commit_to_current_state(&self) -> Self::StateCommitment;
+    fn generate_state_proof(&self, circuit_builder: &CircuitBuilder<F, D>) -> ProofVerifyData;
+}
+
+pub trait SolverCircuitGenerator<T>
+where
+    T: Intent,
+{
+    fn generate_circuit(
         circuit_builder: &mut CircuitBuilder<F, D>,
-        partial_witness: &mut PartialWitness<F>,
-    ) -> Result<(), anyhow::Error>;
-    fn verify_intents_signatures(&self, intents: Vec<T>) -> Result<(), anyhow::Error>;
+        solver: impl Solver<T>,
+        intent: T,
+    );
 }
 
 pub struct ProofVerifyData {
     pub proof_with_pis: ProofWithPublicInputsTarget<D>,
     pub inner_verifier_data: VerifierCircuitTarget,
     pub inner_common_data: CommonCircuitData<F, D>,
-}
-
-pub trait SolverRuntimeExec<T>
-where
-    T: Intent,
-{
-    fn generate_current_execution_state_circuit(
-        &self,
-        circuit_builder: &mut CircuitBuilder<F, D>,
-        state_intents: Vec<IntentSignature<T>>,
-    ) -> Result<ProofVerifyData, anyhow::Error>;
-
-    fn generate_execute_state_transition_circuit(
-        &self,
-        circuit_builder: &mut CircuitBuilder<F, D>,
-        previous_state_proof: ProofVerifyData,
-        new_intent: IntentSignature<T>,
-        state_intents: Vec<IntentSignature<T>>,
-    );
 }
