@@ -107,7 +107,7 @@ impl Intent for SwapIntent {
     fn sign_intent(&self, private_key: PrivateKey) -> Signature {
         let message = <Self as StructuredHashInterface>::structured_hash(&self);
         let message = Message::new_message(message);
-        Signature::sign_message(&private_key, &message)
+        private_key.sign_message(&message)
     }
 }
 
