@@ -170,7 +170,7 @@ impl SolverRuntimeExec<SwapIntent> for SwapSolverRuntimeExec {
         new_intent: IntentSignature<SwapIntent>,
         state_intents: Vec<IntentSignature<SwapIntent>>,
     ) {
-        // 1. Verify intent signature
+        // 1. Verify intent signature, for new intent
         let ecdsa_targets = circuit_builder.verify_intent_signature();
 
         // 2. Verify previous state proof
@@ -184,6 +184,8 @@ impl SolverRuntimeExec<SwapIntent> for SwapSolverRuntimeExec {
             &inner_verifier_data,
             &inner_common_data,
         );
+
+        // 3.
 
         todo!();
     }
