@@ -9,7 +9,7 @@ use plonky2::{
     },
     plonk::{circuit_builder::CircuitBuilder, config::AlgebraicHasher},
 };
-use tree_circuit_generation::add_merkle_root_target;
+use tree_circuit_generation::MerkleRootGenerationBuilder;
 
 mod tests;
 mod tree_circuit_generation;
@@ -43,8 +43,10 @@ pub trait Provable<F: RichField + Extendable<D>, const D: usize> {
     }
 }
 
-impl<F: RichField + Extendable<D>, const D: usize, H: AlgebraicHasher<F>> Provable<F, D>
-    for MerkleTree<F, H>
+impl<const D: usize, F, H> Provable<F, D> for MerkleTree<F, H>
+where
+    F: RichField + Extendable<D>,
+    H: AlgebraicHasher<F>,
 {
     type Value = H::Hash;
     type Targets = Vec<Vec<Target>>;
@@ -69,7 +71,11 @@ impl<F: RichField + Extendable<D>, const D: usize, H: AlgebraicHasher<F>> Provab
             .collect::<Vec<_>>();
         let to_extend_target = circuit_builder.zero();
         let out_target =
-            add_merkle_root_target::<D, F, H>(circuit_builder, targets.clone(), to_extend_target);
+            <CircuitBuilder<F, D> as MerkleRootGenerationBuilder<D, F, H>>::add_merkle_root_target(
+                circuit_builder,
+                targets.clone(),
+                to_extend_target,
+            );
         (targets, out_target)
     }
 
