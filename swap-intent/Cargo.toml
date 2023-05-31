@@ -1,15 +1,8 @@
 [package]
-name = "types"
+name = "swap-intent"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hex-literal = "0.4.1"
-libsecp256k1 = "0.7.1"
-num-bigint = "0.4.3"
-plonky2 = "0.1.3"
-plonky2_ecdsa = "0.1.0"
-rand = "0.8.5"
-thiserror = "1.0.40"
