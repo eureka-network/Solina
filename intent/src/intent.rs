@@ -1,4 +1,3 @@
-use conversions::types::{Message, PrivateKey, PublicKey, Signature};
 use plonky2::{
     iop::witness::PartialWitness,
     plonk::{
@@ -8,6 +7,7 @@ use plonky2::{
         proof::ProofWithPublicInputs,
     },
 };
+use types::types::{Message, PrivateKey, PublicKey, Signature};
 
 use crate::{
     circuit::ECDSAIntentCircuit, structured_hash::StructuredHashInterface,

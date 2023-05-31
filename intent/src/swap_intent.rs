@@ -4,9 +4,9 @@ use crate::{
     intent::{ExecuteRuntime, Intent},
     structured_hash::StructuredHashInterface,
 };
-use conversions::types::{Message, PrivateKey, Signature};
 use keccak_hash::keccak;
 use num_bigint::BigUint;
+use types::types::{Message, PrivateKey, Signature};
 
 pub type Price = BigUint;
 

@@ -77,7 +77,9 @@ impl SwapSolverCircuitGenerator {
 }
 
 impl SolverCircuitGenerator<SwapIntent> for SwapSolverCircuitGenerator {
-    fn generate_circuit(self, solver: impl Solver<SwapIntent>, intent: SwapIntent) -> Self {}
+    fn generate_circuit(self, solver: impl Solver<SwapIntent>, intent: SwapIntent) -> Self {
+        todo!()
+    }
 }
 
 pub struct SwapSolverRuntimeExec {

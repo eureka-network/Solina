@@ -1,6 +1,8 @@
 [workspace]
 members = [
-    "conversions",
     "eth-wallet",
     "intent",
+    "merkle-tree",
+    "swap-intent",
+    "types",
 ]
