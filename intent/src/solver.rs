@@ -35,11 +35,7 @@ pub trait SolverCircuitGenerator<T>
 where
     T: Intent,
 {
-    fn generate_circuit(
-        circuit_builder: &mut CircuitBuilder<F, D>,
-        solver: impl Solver<T>,
-        intent: T,
-    );
+    fn generate_circuit(self, solver: impl Solver<T>, intent: T) -> Self;
 }
 
 pub struct ProofVerifyData {

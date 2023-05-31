@@ -9,7 +9,7 @@ use plonky2_ecdsa::gadgets::biguint::CircuitBuilderBiguint;
 
 use crate::{
     circuit::ECDSAIntentCircuit,
-    solver::{IntentSignature, ProofVerifyData, Solver},
+    solver::{IntentSignature, ProofVerifyData, Solver, SolverCircuitGenerator},
     swap_intent::SwapIntent,
     D, F,
 };
@@ -29,7 +29,9 @@ pub struct SwapState {
 
 /// Swap state commitments, for buy and sell intents, simultaneously.
 pub struct SwapStateCommitment {
+    /// Commitment to buy intents ordered vec
     buy_intent_commitment: MerkleCap<F, PoseidonHash>,
+    /// Commitment to sell intents ordered vec
     sell_intent_commitment: MerkleCap<F, PoseidonHash>,
 }
 
@@ -54,6 +56,28 @@ impl Solver<SwapIntent> for SwapSolver {
     fn generate_state_proof(&self, circuit_builder: &CircuitBuilder<F, D>) -> ProofVerifyData {
         todo!()
     }
+}
+
+pub struct SwapSolverCircuitGenerator {
+    recursive_proof_data: Option<ProofVerifyData>,
+}
+
+impl SwapSolverCircuitGenerator {
+    pub fn new() -> SwapSolverCircuitGenerator {
+        Self {
+            recursive_proof_data: None,
+        }
+    }
+
+    pub(crate) fn new_with_recursive_proof_data(recursive_proof_data: ProofVerifyData) -> Self {
+        Self {
+            recursive_proof_data: Some(recursive_proof_data),
+        }
+    }
+}
+
+impl SolverCircuitGenerator<SwapIntent> for SwapSolverCircuitGenerator {
+    fn generate_circuit(self, solver: impl Solver<SwapIntent>, intent: SwapIntent) -> Self {}
 }
 
 pub struct SwapSolverRuntimeExec {
