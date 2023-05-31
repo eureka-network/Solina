@@ -108,3 +108,5 @@ where
         }
         partial_witness.set_hash_target(out_targets, self.cap.0[0]);
         Ok(())
+    }
+}
