@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.71"
 
-conversions = { path = "../conversions" }
+types = { path = "../types" }
 hex-literal = "0.4.1"
 keccak-hash = "0.10.0"
 plonky2 = "0.1.3"

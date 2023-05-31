@@ -1,6 +1,6 @@
-use conversions::types::{Message, PrivateKey, PublicKey, Signature};
 use libsecp256k1::{sign, verify};
 use rand::Rng;
+use types::types::{Message, PrivateKey, PublicKey, Signature};
 
 pub trait ETHWallet {
     fn initialize_new_wallet() -> Self;
