@@ -3,7 +3,10 @@ use plonky2_ecdsa::curve::secp256k1::Secp256K1;
 
 pub mod circuit;
 mod intent;
+pub mod solver;
+pub mod structured_hash;
 mod swap_intent;
+mod swap_solver;
 pub mod witness;
 
 pub const D: usize = 2;
