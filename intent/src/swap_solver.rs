@@ -2,16 +2,20 @@ use anyhow::anyhow;
 use binary_search_tree::BinarySearchTree;
 use merkle_tree::tree_circuit_generation::MerkleRootGenerationBuilder;
 use plonky2::{
-    hash::{merkle_tree::MerkleCap, poseidon::PoseidonHash},
-    iop::target::BoolTarget,
+    hash::{
+        hash_types::HashOutTarget, merkle_proofs::MerkleProofTarget, merkle_tree::MerkleCap,
+        poseidon::PoseidonHash,
+    },
+    iop::target::{BoolTarget, Target},
     plonk::{circuit_builder::CircuitBuilder, config::PoseidonGoldilocksConfig},
 };
-use plonky2_ecdsa::gadgets::biguint::{CircuitBuilderBiguint, BigUintTarget};
+use plonky2_ecdsa::gadgets::biguint::{BigUintTarget, CircuitBuilderBiguint};
 
 use crate::{
     circuit::ECDSAIntentCircuit,
+    intent::Intent,
     solver::{IntentSignature, ProofVerifyData, Solver, SolverCircuitGenerator},
-    swap_intent::{SwapIntent, Price},
+    swap_intent::{Price, SwapIntent},
     D, F,
 };
 
@@ -87,10 +91,12 @@ fn generate_state_transition_circuit(
     circuit_builder: &mut CircuitBuilder<F, D>,
     previous_state_proof: ProofVerifyData,
     new_intent: IntentSignature<SwapIntent>,
+    new_intent_index: Option<usize>,
     state_intents: Vec<IntentSignature<SwapIntent>>,
+    matching_intent: Option<(usize, IntentSignature<SwapIntent>)>,
 ) -> Result<(), anyhow::Error> {
     if state_intents.is_empty() {
-        generate_initial_state_circuit(circuit_builder, new_intent)?;
+        generate_initial_state_circuit(circuit_builder, &new_intent)?;
     }
 
     // 1. Verify intent signature, for new intent
@@ -108,6 +114,111 @@ fn generate_state_transition_circuit(
         &inner_common_data,
     );
 
+    let (keccak_structured_hash_targets, root_targets) =
+        generate_intents_state_commitment(circuit_builder, &state_intents);
+    // 7. Assert that intents are well sorted
+    // TODO: for now, we assume that our solver only receives intents for a single token pair (A, B),
+    // so we don't need to worry about enforcing pair satisfiability
+    let price_and_base_amounts_targets =
+        generate_intent_correct_ordering_proof(circuit_builder, &state_intents)?;
+
+    // 8. Register price and base amounts as public inputs
+    price_and_base_amounts_targets
+        .price_targets
+        .iter()
+        .for_each(|ts| {
+            circuit_builder
+                .register_public_inputs(&ts.limbs.iter().map(|t| t.0).collect::<Vec<_>>())
+        });
+    price_and_base_amounts_targets
+        .base_amount_targets
+        .iter()
+        .for_each(|ts| {
+            circuit_builder
+                .register_public_inputs(&ts.limbs.iter().map(|t| t.0).collect::<Vec<_>>())
+        });
+
+    // TODO: need to connect `price_and_base_amounts_targets` with `keccak_structured_hash_intent_targets`
+    // TODO: the current commitment to the new state (the merkle root) should be connected to the next phase commitment
+    // 9. Commit to the new state
+
+    if let Some((ind, matching_intent)) = matching_intent {
+        // 10. Provide a merkle proof that matching intent was indeed provided consistent with the
+        //     current internal state
+        // 10.1 First we need to register as public inputs, the leaf index bit targets
+        let leaf_index_bits_targets = (0..32 * 8)
+            .map(|i| circuit_builder.add_virtual_bool_target_safe())
+            .collect::<Vec<_>>();
+        circuit_builder.register_public_inputs(
+            &leaf_index_bits_targets
+                .iter()
+                .map(|i| i.target)
+                .collect::<Vec<_>>(),
+        );
+
+        // 10.2 Add targets for Merkle proof and register these as public inputs
+        let proof_targets = MerkleProofTarget {
+            // TODO: the length should be the height of the tree
+            siblings: circuit_builder.add_virtual_hashes(state_intents.len().ilog(2) as usize + 1),
+        };
+        circuit_builder.verify_merkle_proof::<PoseidonHash>(
+            keccak_structured_hash_targets[ind].to_vec(),
+            &leaf_index_bits_targets,
+            root_targets,
+            &proof_targets,
+        )
+    } else {
+        if let Some(ind) = new_intent_index {
+            let (new_keccak_structured_hash_targets, new_root_targets) =
+                generate_new_state_commitment_with_no_matching(
+                    circuit_builder,
+                    &state_intents,
+                    &new_intent,
+                    ind,
+                );
+            (0..new_keccak_structured_hash_targets.len()).for_each(|i| {
+                if i < ind {
+                    (0..32).for_each(|j| {
+                        circuit_builder.connect(
+                            new_keccak_structured_hash_targets[i][j],
+                            keccak_structured_hash_targets[i][j],
+                        )
+                    });
+                } else if i > ind {
+                    (0..32).for_each(|j| {
+                        circuit_builder.connect(
+                            new_keccak_structured_hash_targets[i + 1][j],
+                            keccak_structured_hash_targets[i][j],
+                        )
+                    });
+                }
+            });
+        } else {
+            return Err(anyhow!(
+                "Failed to provide intent index in Solver's new internal state"
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+fn generate_initial_state_circuit(
+    circuit_builder: &mut CircuitBuilder<F, D>,
+    new_intent: &IntentSignature<SwapIntent>,
+) -> Result<(), anyhow::Error> {
+    Ok(())
+}
+
+pub(crate) struct PriceAndBaseAmountTargets {
+    price_targets: Vec<BigUintTarget>,
+    base_amount_targets: Vec<BigUintTarget>,
+}
+
+fn generate_intents_state_commitment(
+    circuit_builder: &mut CircuitBuilder<F, D>,
+    state_intents: &[IntentSignature<SwapIntent>],
+) -> (Vec<[Target; 32]>, HashOutTarget) {
     // 3. Generate targets for each of the keccak structured hashes, for each intent in the state
     //    and register these as public inputs
     let keccak_structured_hash_intent_targets = state_intents
@@ -121,7 +232,7 @@ fn generate_state_transition_circuit(
     // 4. Build Merkle Tree from the previous keccak structured hash targets
     let to_extend_target = circuit_builder.zero();
     let root_targets = <CircuitBuilder<F, D> as MerkleRootGenerationBuilder<D, F, PoseidonHash>>::add_merkle_root_target(
-        circuit_builder, 
+        circuit_builder,
         keccak_structured_hash_intent_targets
             .iter()
             .map(|v| v.to_vec())
@@ -140,29 +251,12 @@ fn generate_state_transition_circuit(
         .zip(public_input_root_targets.elements)
         .for_each(|(t1, t2)| circuit_builder.connect(*t1, t2));
 
-    // 7. Generate a proof that these intents are well sorted
-    // TODO: for now, we assume that our solver only receives intents for a single token pair (A, B),
-    // so we don't need to worry about enforcing pair satisfiability
-    let targets = generate_intent_correct_ordering_proof(circuit_builder, state_intents)?;
-
-    Ok(())
-}
-
-fn generate_initial_state_circuit(
-    circuit_builder: &mut CircuitBuilder<F, D>,
-    new_intent: IntentSignature<SwapIntent>,
-) -> Result<(), anyhow::Error> {
-    Ok(())
-}
-
-pub(crate) struct PriceAndBaseAmountTargets {
-    price_targets: Vec<BigUintTarget>,
-    base_amount_targets: Vec<BigUintTarget>,
+    (keccak_structured_hash_intent_targets, root_targets)
 }
 
 fn generate_intent_correct_ordering_proof(
     circuit_builder: &mut CircuitBuilder<F, D>,
-    state_intents: Vec<IntentSignature<SwapIntent>>,
+    state_intents: &[IntentSignature<SwapIntent>],
 ) -> Result<PriceAndBaseAmountTargets, anyhow::Error> {
     if state_intents.is_empty() {
         return Err(anyhow!(
@@ -175,13 +269,13 @@ fn generate_intent_correct_ordering_proof(
         .map(|i| {
             // 1.1 Add targets for price
             // TODO: verify that the number of limbs in a [`BigUint`] can be generated in this way ([`BigUint`] either uses [`u64`] or [`u32`] depending on the CPUs arch)
-            circuit_builder
-                .add_virtual_biguint_target(i.intent.get_price().to_u32_digits().len())
-            
+            circuit_builder.add_virtual_biguint_target(i.intent.get_price().to_u32_digits().len())
         })
         .collect::<Vec<_>>();
 
-    let base_amount_data_biguint_targets = state_intents.iter().map(|i|  
+    let base_amount_data_biguint_targets = state_intents
+        .iter()
+        .map(|i|
         // 1.2 Add targets for base token intents amount
         circuit_builder.add_virtual_biguint_target(
             i.intent
@@ -189,7 +283,8 @@ fn generate_intent_correct_ordering_proof(
                 .min_base_token_amount
                 .to_u32_digits()
                 .len(),
-        )).collect::<Vec<_>>(); 
+        ))
+        .collect::<Vec<_>>();
 
     // 2. Assert ordering depending on swap direction
     let intent_swap_direction = circuit_builder.constant_bool(
@@ -222,7 +317,8 @@ fn generate_intent_correct_ordering_proof(
         let cur_price_element = &price_data_biguint_targets[i];
         let cur_base_amount_element = &base_amount_data_biguint_targets[i];
         let price_cmp = circuit_builder.cmp_biguint(&prev_price_element, &cur_price_element);
-        let base_amount_cmp = circuit_builder.cmp_biguint(&prev_base_amount_element, &cur_base_amount_element);
+        let base_amount_cmp =
+            circuit_builder.cmp_biguint(&prev_base_amount_element, &cur_base_amount_element);
         let not_base_amount_cmp = circuit_builder.not(base_amount_cmp);
 
         // The ordering we enforce here is as follows:
@@ -246,11 +342,21 @@ fn generate_intent_correct_ordering_proof(
         // update prev price and base amounts elements
         prev_price_element = cur_price_element;
         prev_base_amount_element = cur_base_amount_element;
+    });
 
-        });
-
-    Ok(PriceAndBaseAmountTargets { 
-        price_targets: price_data_biguint_targets, 
-        base_amount_targets: base_amount_data_biguint_targets
+    Ok(PriceAndBaseAmountTargets {
+        price_targets: price_data_biguint_targets,
+        base_amount_targets: base_amount_data_biguint_targets,
     })
+}
+
+fn generate_new_state_commitment_with_no_matching(
+    circuit_builder: &mut CircuitBuilder<F, D>,
+    state_intents: &[IntentSignature<SwapIntent>],
+    new_intent: &IntentSignature<SwapIntent>,
+    new_intent_index: usize,
+) -> (Vec<[Target; 32]>, HashOutTarget) {
+    let mut new_state_intents = state_intents.to_vec();
+    new_state_intents.insert(new_intent_index, *new_intent);
+    generate_intents_state_commitment(circuit_builder, state_intents)
 }

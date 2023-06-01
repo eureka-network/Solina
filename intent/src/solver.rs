@@ -10,6 +10,7 @@ use crate::{
 };
 
 #[allow(dead_code)]
+#[derive(Clone)]
 pub struct IntentSignature<T>
 where
     T: Intent,

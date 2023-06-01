@@ -36,6 +36,7 @@ pub trait Intent {
 }
 
 #[allow(dead_code)]
+#[derive(Clone)]
 pub struct SignatureProofData<C: GenericConfig<D, F = F>> {
     pub proof_with_pis: ProofWithPublicInputs<F, C, D>,
     pub common: CommonCircuitData<F, D>,
