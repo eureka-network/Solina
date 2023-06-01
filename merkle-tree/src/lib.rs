@@ -12,7 +12,7 @@ use plonky2::{
 use tree_circuit_generation::MerkleRootGenerationBuilder;
 
 mod tests;
-mod tree_circuit_generation;
+pub mod tree_circuit_generation;
 mod utils;
 
 pub trait Provable<F: RichField + Extendable<D>, const D: usize> {

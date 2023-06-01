@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use binary_search_tree::BinarySearchTree;
+use merkle_tree::tree_circuit_generation::MerkleRootGenerationBuilder;
 use plonky2::{
     hash::{merkle_tree::MerkleCap, poseidon::PoseidonHash},
     iop::target::BoolTarget,
