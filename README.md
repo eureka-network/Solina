@@ -1,2 +1,4 @@
 # Solina
-Intent Solver architecture
+Intent Solver architecture:
+
+# Architecture
