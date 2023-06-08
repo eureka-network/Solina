@@ -41,4 +41,17 @@ To automize the described process, we propose the use of Zero Knowledge cryptogr
 signatures of Ethereum's EIP-712 structured hash of the `Intent` contents,
 full compatible with Ethereum's signature scheme.
 
-2. `Intent` constraints are satisfied by each proposed solution. This reflects the integrity of each `Solver`'s solution
+2. `Intent` constraints are satisfied by each proposed solution. This reflects the integrity of each `Solver`'s solution.
+
+## Related work
+
+We present a, possibly non-exhaustive, list of related projects, which we
+derived inspiration from:
+
+1. Cow swap intent based trade platform:
+
+https://docs.cow.fi/overview/introduction
+
+2. Anoma's intent centric protocol:
+
+https://anoma.net/
