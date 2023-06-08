@@ -2,7 +2,7 @@
 
 An intent-solver framework, for customized problem-specific computing solutions.
 
-# Architecture
+## Architecture
 
 1. Given a well specified computing problem, like trading on a (or multiple) DEXes with many economic agents, users express their `Intent`, that is, their desired outcome given the user inputs satisfying precise (boundary) constraints.
 
@@ -14,7 +14,7 @@ An intent-solver framework, for customized problem-specific computing solutions.
 
 5. In this way, we allow for a market between user `Intent`s and `Solver`s compute power. 
 
-# Example
+## Example
 
 As previously mentioned, consider the case in which multiple market 
 participants express their trade `Intent` (for example, Alice expresses the 
@@ -33,7 +33,7 @@ Given the proposed solution, users express their satisfaction, if their intent h
 The `Solver` who proposed this solution accrues the fees, and the trades
 are performed (say, on a DEX, or multiple DEXes).
 
-# Cryptographic guarantees
+## Cryptographic guarantees
 
 To automize the described process, we propose the use of Zero Knowledge cryptography to testify to the following requirements:
 
