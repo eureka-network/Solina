@@ -33,7 +33,7 @@ Given the proposed solution, users express their satisfaction, if their intent h
 The `Solver` who proposed this solution accrues the fees, and the trades
 are performed (say, on a DEX, or multiple DEXes).
 
-# Security guarantees
+# Cryptographic guarantees
 
 To automize the described process, we propose the use of Zero Knowledge cryptography to testify to the following requirements:
 
