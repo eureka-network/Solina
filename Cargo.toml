@@ -2,9 +2,9 @@
 members = [
     "eth-wallet",
     "solina",
+    "solina-zkvm/host",
+    "solina-zkvm/methods",
     "types",
-    "zkvm/host",
-    "zkvm/methods",
 ]
 
 # Always optimize; building and running the guest takes much longer without optimization.
