@@ -3,7 +3,7 @@ use plonky2_ecdsa::curve::secp256k1::Secp256K1;
 
 pub mod challenger;
 pub mod circuit;
-mod intent;
+pub mod intent;
 pub mod solver;
 pub mod structured_hash;
 pub mod witness;
