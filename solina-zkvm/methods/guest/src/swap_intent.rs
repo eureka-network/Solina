@@ -1,9 +1,6 @@
-use crate::{
-    intent::{ExecuteRuntime, Intent},
-    structured_hash::StructuredHashInterface,
-};
 use keccak_hash::keccak;
 use num_bigint::BigUint;
+use solina::{intent::Intent, structured_hash::StructuredHashInterface};
 use types::types::{Message, PrivateKey, Signature};
 
 #[derive(Clone, Copy, Debug)]
@@ -81,11 +78,7 @@ impl Intent for SwapIntent {
     type Inputs = SwapInputs;
     type Constraints = SwapConstraints;
 
-    fn build_intent(
-        inputs: Self::Inputs,
-        constraints: Self::Constraints,
-        _execute_runtime: crate::intent::ExecuteRuntime,
-    ) -> Self {
+    fn build_intent(inputs: Self::Inputs, constraints: Self::Constraints) -> Self {
         Self {
             inputs,
             constraints,
@@ -98,10 +91,6 @@ impl Intent for SwapIntent {
 
     fn get_inputs(&self) -> Self::Inputs {
         self.inputs.clone()
-    }
-
-    fn get_runtime_execution(&self) -> ExecuteRuntime {
-        ExecuteRuntime::Swap
     }
 
     fn sign_intent(&self, private_key: PrivateKey) -> Signature {
