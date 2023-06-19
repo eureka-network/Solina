@@ -1,0 +1,10 @@
+[package]
+name = "solina_zkvm"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+risc0-zkvm = { version = "0.15.3", default-features = false }
+solina = { path = "../../../solina" }
