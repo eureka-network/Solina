@@ -10,5 +10,5 @@ edition = "2021"
 keccak-hash = "0.10.0"
 num-bigint = "0.4.3"
 risc0-zkvm = { version = "0.15.3", default-features = false }
-# solina = { path = "../../../solina" }
+solina = { path = "../../../solina" }
 # types = { path = "../../../types" }

@@ -1,4 +1,4 @@
-use crate::intent::Intent;
+use crate::{error::SolinaError, intent::Intent};
 
 pub trait ChallengeOrganizer<Addr, Int>
 where
@@ -11,7 +11,7 @@ where
         &self,
         solver_addr: Addr,
         solution: Self::Solution,
-    ) -> Result<(), anyhow::Error>;
+    ) -> Result<(), SolinaError>;
     fn propose_batch_intent(&self) -> Vec<Int>;
     fn compute_solution_score(&self, solution: Self::Solution) -> Self::Score;
 }

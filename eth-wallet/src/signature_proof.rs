@@ -8,7 +8,7 @@ use plonky2::{
     },
 };
 use solina::{intent::Intent, structured_hash::StructuredHashInterface};
-use types::types::{Message, PrivateKey, PublicKey, Signature};
+use types::types::{Message, PublicKey, Signature};
 
 use crate::{circuit::ECDSAIntentCircuit, witness::ECDSAIntentWitness, D, F};
 
