@@ -1,6 +1,22 @@
 [workspace]
 members = [
     "eth-wallet",
-    "intent",
+    "solina",
+    "solina-zkvm/host",
+    "solina-zkvm/methods",
     "types",
 ]
+
+# Always optimize; building and running the guest takes much longer without optimization.
+[profile.dev]
+opt-level = 3
+
+[profile.dev.build-override]
+opt-level = 3
+
+[profile.release]
+debug = 1
+lto = true
+
+[profile.release.build-override]
+opt-level = 3

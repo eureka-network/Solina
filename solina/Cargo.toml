@@ -1,5 +1,5 @@
 [package]
-name = "intent"
+name = "solina"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,9 +9,8 @@ edition = "2021"
 anyhow = "1.0.71"
 
 types = { path = "../types" }
-hex-literal = "0.4.1"
-keccak-hash = "0.10.0"
 plonky2 = "0.1.3"
 plonky2_ecdsa = "0.1.0"
 num-bigint = "0.4.3"
 serde = "1.0.163"
+keccak-hash = "0.10.0"

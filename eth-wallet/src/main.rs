@@ -1,5 +1,4 @@
 use eth_wallet::wallet::{generate_random_message, verify_signature, ETHWallet, Wallet};
-use intent::{circuit::ECDSAIntentCircuit, witness::ECDSAIntentWitness, D, F};
 use plonky2::{
     iop::witness::PartialWitness,
     plonk::{
@@ -7,6 +6,7 @@ use plonky2::{
         config::PoseidonGoldilocksConfig,
     },
 };
+use solina::{circuit::ECDSAIntentCircuit, witness::ECDSAIntentWitness, D, F};
 
 fn main() {
     let wallet = Wallet::initialize_new_wallet();

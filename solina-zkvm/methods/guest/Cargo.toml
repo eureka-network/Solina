@@ -1,0 +1,15 @@
+[package]
+name = "solina_zkvm"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+anyhow = "1.0.71"
+hex-literal = "0.4.1"
+keccak-hash = "0.10.0"
+num-bigint = "0.4.3"
+risc0-zkvm = { version = "0.15.3", default-features = false }
+solina = { path = "../../../solina" }
+types = { path = "../../../types" }
