@@ -1,6 +1,7 @@
 use keccak_hash::keccak;
 
-use crate::StructuredHash;
+#[allow(dead_code)]
+pub(crate) type StructuredHash = [u8; 32];
 
 pub trait StructuredHashInterface {
     fn type_encode() -> String;
