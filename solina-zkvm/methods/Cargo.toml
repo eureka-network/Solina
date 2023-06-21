@@ -1,5 +1,5 @@
 [package]
-name = "solina-zkvm-methods"
+name = "solina_zkvm_methods"
 version = "0.1.0"
 edition = "2021"
 

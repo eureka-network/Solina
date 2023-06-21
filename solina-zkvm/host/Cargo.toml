@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-solina-zkvm-methods = { path = "../methods" }
+solina_zkvm_methods = { path = "../methods" }
 risc0-zkvm = { version = "0.15.3" }
 serde = "1.0"
